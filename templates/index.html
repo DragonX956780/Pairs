@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Charts</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+<body>
+    <h1>Generate Stock Charts</h1>
+    <form method="POST">
+        <div class="checkbox-container">
+            <input type="checkbox" name="volume" id="volume">
+            <label for="volume">Display Volume</label>
+        </div>
+        <div class="checkbox-container">
+            <input type="checkbox" name="bollinger_bands" id="bollinger_bands">
+            <label for="bollinger_bands">Display Bollinger Bands</label>
+        </div>
+        <div class="checkbox-container">
+            <input type="checkbox" name="moving_averages" id="moving_averages">
+            <label for="moving_averages">Display Moving Averages</label>
+        </div>
+        <div class="checkbox-container">
+            <input type="checkbox" name="rsi" id="rsi">
+            <label for="rsi">Display RSI</label>
+        </div>
+        <input type="submit" value="Generate Charts">
+    </form>
+    <h2>AAPL Chart</h2>
+    <img src="static/AAPL_chart.png" alt="AAPL Chart">
+    <h2>MSFT Chart</h2>
+    <img src="static/MSFT_chart.png" alt="MSFT Chart">
+</body>
+</html>
