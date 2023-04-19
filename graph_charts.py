@@ -1,57 +1,98 @@
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import mplfinance as mpf
-import matplotlib.pyplot as plt
-import pandas_ta as ta
+import matplotlib.dates as mdates
+from mplfinance.original_flavor import candlestick_ohlc
+import matplotlib
+matplotlib.use('agg')
 
-def create_candlestick_chart(input_file, output_file, stock, backtesting_instance, volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
-    data_original = pd.read_csv(input_file, index_col=0, parse_dates=True)
-    msft_columns = [col for col in data_original.columns if 'MSFT' in col]
-    msft_data = data_original[msft_columns]
-    msft_data.columns = [col.replace('MSFT ', '') for col in msft_data.columns]
+def plot_data_points():
+    # Sample data points
+    x = [1, 2, 3, 4, 5]
+    y = [2, 4, 6, 8, 10]
 
-    data = msft_data.copy()
-    data.index.name = 'Date'
-    data = data.rename(columns={'Adj Close': 'Close', 'High': 'High', 'Low': 'Low', 'Open': 'Open', 'Volume': 'Volume'})
-    data = data[['Open', 'High', 'Low', 'Close', 'Volume']]
+    # Create a figure and axis
+    fig, ax = plt.subplots()
 
-    buy_dates = [order['date'] for order in backtesting_instance.orders if order['type'] == 'buy' and order['stock'] == stock]
-    sell_dates = [order['date'] for order in backtesting_instance.orders if order['type'] == 'sell' and order['stock'] == stock]
+    # Plot the data points
+    ax.scatter(x, y)
 
-    buy_signals = data.loc[buy_dates]
-    sell_signals = data.loc[sell_dates]
+    # Set labels for the x and y axes
+    ax.set_xlabel('X Axis')
+    ax.set_ylabel('Y Axis')
 
-    apds = []
+    # Set the title of the plot
+    ax.set_title('Sample Data Points')
+
+    # Save the plot as an image
+    plt.savefig('static/plot.png', format='png', bbox_inches='tight')
+
+def add_bollinger_bands(data):
+    data_with_bb = data.copy()
+    data_with_bb['20 Day MA'] = data['Close'].rolling(window=20).mean()
+    data_with_bb['Upper Band'] = data_with_bb['20 Day MA'] + 2 * data['Close'].rolling(window=20).std()
+    data_with_bb['Lower Band'] = data_with_bb['20 Day MA'] - 2 * data['Close'].rolling(window=20).std()
+    bollinger_bands = [mpf.make_addplot(data_with_bb['20 Day MA']), mpf.make_addplot(data_with_bb['Upper Band']), mpf.make_addplot(data_with_bb['Lower Band'])]
+    return bollinger_bands, data_with_bb
+
+def add_moving_averages(data):
+    data_with_ma = data.copy()
+    data_with_ma['50 Day MA'] = data['Close'].rolling(window=50).mean()
+    data_with_ma['200 Day MA'] = data['Close'].rolling(window=200).mean()
+    moving_averages = [mpf.make_addplot(data_with_ma['50 Day MA'], color='red'), mpf.make_addplot(data_with_ma['200 Day MA'], color='blue')]
+    return moving_averages, data_with_ma
+
+def add_rsi(data, period=14):
+    delta = data['Close'].diff()
+    gains = delta.where(delta > 0, 0)
+    losses = -delta.where(delta < 0, 0)
+
+    avg_gain = gains.rolling(window=period).mean()
+    avg_loss = losses.rolling(window=period).mean()
+
+    rs = avg_gain / avg_loss
+    rsi = 100 - (100 / (1 + rs))
+
+    data_with_rsi = data.copy()
+    data_with_rsi['RSI'] = rsi
+
+    rsi_plot = mpf.make_addplot(data_with_rsi['RSI'], panel=1, secondary_y=False, color='g')
+    return rsi_plot, data_with_rsi
+
+
+def add_volume(data, stock, data_original):
+    data_with_volume = data.copy()
+    data_with_volume['Volume'] = data_original[f'{stock} Volume']
+    return data_with_volume
+
+def create_candlestick_chart(csv_file, output_filename, stock, volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
+    data_original = pd.read_csv(csv_file, index_col=0, parse_dates=True)
+    column_prefix = stock
+    data = data_original[[f'{column_prefix} Open', f'{column_prefix} High', f'{column_prefix} Low', f'{column_prefix} Close']]
+    data.columns = ['Open', 'High', 'Low', 'Close']
 
     if volume:
-        apds.append(mpf.make_addplot(data['Volume'], panel=1, color='g', secondary_y=False))
+        data = add_volume(data, stock, data_original)
+
+    additional_plots = []
 
     if bollinger_bands:
-        data['upper_bb'], data['middle_bb'], data['lower_bb'] = ta.bbands(data['Close'])
-        apds.append(mpf.make_addplot(data['upper_bb'], color='silver'))
-        apds.append(mpf.make_addplot(data['middle_bb'], color='silver'))
-        apds.append(mpf.make_addplot(data['lower_bb'], color='silver'))
+        bb_plots, data = add_bollinger_bands(data)
+        additional_plots.extend(bb_plots)
 
     if moving_averages:
-        data['SMA20'] = ta.sma(data['Close'], length=20)
-        data['SMA50'] = ta.sma(data['Close'], length=50)
-        apds.append(mpf.make_addplot(data['SMA20'], color='magenta'))
-        apds.append(mpf.make_addplot(data['SMA50'], color='orange'))
+        ma_plots, data = add_moving_averages(data)
+        additional_plots.extend(ma_plots)
 
     if rsi:
-        data['RSI'] = backtesting_instance.calculate_rsi(data_original)
-        apds.append(mpf.make_addplot(data['RSI'], panel=2, color='b', secondary_y=False))
+        rsi_plot, data = add_rsi(data)
+        additional_plots.append(rsi_plot)
 
-    fig, axes = mpf.plot(data, type='candle', style='charles', title=f'{stock} Candlestick Chart', ylabel='Price', addplot=apds, returnfig=True, volume=volume)
+    mpf.plot(data, type='candle', style='charles', title=f'{stock} Candlestick Chart', ylabel='Price',
+             ylabel_lower='Volume', volume=volume, addplot=additional_plots, savefig=output_filename)
 
-    for index, row in buy_signals.iterrows():
-        axes[0].annotate('BUY', xy=(index, row['Low']), xytext=(index, row['Low'] - 1), arrowprops=dict(facecolor='green', edgecolor='green', shrink=0.05), fontsize=8, color='g')
 
-    for index, row in sell_signals.iterrows():
-        axes[0].annotate('SELL', xy=(index, row['High']), xytext=(index, row['High'] + 1), arrowprops=dict(facecolor='red', edgecolor='red', shrink=0.05), fontsize=8, color='r')
-
-    plt.savefig(output_file)
-    plt.close()
-
-def create_all_charts(backtesting_instance, volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
-    create_candlestick_chart('historical_stock_data.csv', 'static/MSFT_chart.png', 'MSFT', backtesting_instance, volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
-
+def create_all_charts(volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
+    create_candlestick_chart('historical_stock_data.csv', 'static/AAPL_chart.png', 'AAPL', volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
+    create_candlestick_chart('historical_stock_data.csv', 'static/MSFT_chart.png', 'MSFT', volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
