@@ -1,63 +1,35 @@
-import pandas_ta as ta
+import pandas as pd
+import numpy as np
 
 class Backtesting:
-    def __init__(self, period = 14):
-        self.orders = []
-        self.period = period
-    
-    def calculate_rsi(self, stock_data):
-        close_column = [col for col in stock_data.columns if 'Close' in col][0]  # Identify the close column
-        return ta.rsi(stock_data[close_column], length=self.period)
+    def __init__(self, csv_file):
+        self.data = pd.read_csv(csv_file, index_col=0, parse_dates=True)
+        self.events = []
 
+    def basic_strategy(self, stock, buy_threshold, sell_threshold):
+        data = self.data[[f'{stock} Open', f'{stock} High', f'{stock} Low', f'{stock} Close']]
+        data.columns = ['Open', 'High', 'Low', 'Close']
 
+        position = 0
+        buy_price = 0
+        profit = 0
 
-    def buy(self, stock, price, shares):
-        order = {
-            'stock': stock,
-            'price': price,
-            'shares': shares,
-            'type': 'buy'
-        }
-        self.orders.append(order)
+        for index, row in data.iterrows():
+            if row['Close'] < buy_threshold and position == 0:
+                position = 1
+                buy_price = row['Close']
+                self.events.append((index, "buy", buy_price, stock))
+            elif row['Close'] > sell_threshold and position == 1:
+                position = 0
+                sell_price = row['Close']
+                profit += sell_price - buy_price
+                self.events.append((index, "sell", sell_price, stock))
 
-    def sell(self, stock, price, shares):
-        order = {
-            'stock': stock,
-            'price': price,
-            'shares': shares,
-            'type': 'sell'
-        }
-        self.orders.append(order)
-    
-    def backtest_basic_strategy(self, historical_data):
-        positions = []
-        total_profit = 0
+        return profit
 
-        historical_data['RSI'] = self.calculate_rsi(historical_data)
+    def get_events(self, stock=None):
+        if stock is not None:
+            return [event for event in self.events if event[3] == stock]
+        return self.events
 
-        for index, row in historical_data.iterrows():
-            # Buy signal
-            if row['RSI'] < 30:
-                self.buy('AAPL', row['Close'], 1)
-                positions.append({'stock': 'AAPL', 'buy_price': row['Close'], 'buy_date': index})
-
-            # Sell signal
-            elif row['RSI'] > 70:
-                for position in positions:
-                    if position['stock'] == 'AAPL':
-                        self.sell('AAPL', row['Close'], 1)
-                        profit = row['Close'] - position['buy_price']
-                        total_profit += profit
-                        positions.remove(position)
-
-            # Close all positions at the end of the month
-            if index.month != row.name.month:
-                for position in positions:
-                    if position['stock'] == 'AAPL':
-                        self.sell('AAPL', row['Close'], 1)
-                        profit = row['Close'] - position['buy_price']
-                        total_profit += profit
-                        positions.remove(position)
-
-        return total_profit
 

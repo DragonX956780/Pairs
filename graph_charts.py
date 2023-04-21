@@ -66,7 +66,7 @@ def add_volume(data, stock, data_original):
     data_with_volume['Volume'] = data_original[f'{stock} Volume']
     return data_with_volume
 
-def create_candlestick_chart(csv_file, output_filename, stock, volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
+def create_candlestick_chart(csv_file, output_filename, stock, backtesting_instance=None, volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
     data_original = pd.read_csv(csv_file, index_col=0, parse_dates=True)
     column_prefix = stock
     data = data_original[[f'{column_prefix} Open', f'{column_prefix} High', f'{column_prefix} Low', f'{column_prefix} Close']]
@@ -89,10 +89,31 @@ def create_candlestick_chart(csv_file, output_filename, stock, volume=False, bol
         rsi_plot, data = add_rsi(data)
         additional_plots.append(rsi_plot)
 
-    mpf.plot(data, type='candle', style='charles', title=f'{stock} Candlestick Chart', ylabel='Price',
-             ylabel_lower='Volume', volume=volume, addplot=additional_plots, savefig=output_filename)
+    if backtesting_instance:
+        events = backtesting_instance.get_events(stock=stock)
+        buy_events = {pd.to_datetime(event[0]): event[2] for event in events if event[1] == 'buy' and event[0] in data.index}
+        sell_events = {pd.to_datetime(event[0]): event[2] for event in events if event[1] == 'sell' and event[0] in data.index}
+
+        buy_df = data[['Close']].copy()
+        sell_df = data[['Close']].copy()
+
+        buy_df['Price'] = buy_df.index.map(buy_events).fillna(None)
+        sell_df['Price'] = sell_df.index.map(sell_events).fillna(None)
+
+        buy_markers = mpf.make_addplot(buy_df['Price'], scatter=True, markersize=100, marker='^', color='g') if not buy_df['Price'].isnull().all() else None
+        sell_markers = mpf.make_addplot(sell_df['Price'], scatter=True, markersize=100, marker='v', color='r') if not sell_df['Price'].isnull().all() else None
+
+        markers = [buy_markers, sell_markers]
+        markers = [m for m in markers if m is not None]  # Remove None values from the markers list
+        mpf.plot(data, type='candle', style='charles', title=f'{stock} Candlestick Chart', ylabel='Price',
+                ylabel_lower='Volume', volume=volume, addplot=markers + additional_plots, savefig=output_filename)
+    else:
+        mpf.plot(data, type='candle', style='charles', title=f'{stock} Candlestick Chart', ylabel='Price',
+                ylabel_lower='Volume', volume=volume, savefig=output_filename)
 
 
-def create_all_charts(volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
-    create_candlestick_chart('historical_stock_data.csv', 'static/AAPL_chart.png', 'AAPL', volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
-    create_candlestick_chart('historical_stock_data.csv', 'static/MSFT_chart.png', 'MSFT', volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
+
+def create_all_charts(backtesting_instance=None, volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
+    create_candlestick_chart('historical_stock_data.csv', 'static/AAPL_chart.png', 'AAPL', backtesting_instance=backtesting_instance, volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
+    create_candlestick_chart('historical_stock_data.csv', 'static/MSFT_chart.png', 'MSFT', backtesting_instance=backtesting_instance, volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
+
