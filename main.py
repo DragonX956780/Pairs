@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request
 import graph_charts
 from backtesting import Backtesting
+from flask import jsonify
 
 app = Flask(__name__)
 
@@ -20,8 +21,11 @@ def index():
         line_graph = request.form.get("line_graph") == "on"
 
         backtesting_instance = Backtesting('historical_stock_data.csv')
-        backtesting_instance.basic_strategy(first_stock, buy_threshold=110, sell_threshold=120)
-        backtesting_instance.basic_strategy(second_stock, buy_threshold=160, sell_threshold=180)
+        entry_threshold = 1
+        exit_threshold = 1
+
+        # Use pairs_trading_strategy instead of basic_strategy
+        profit = backtesting_instance.pairs_trading_strategy(first_stock, second_stock, entry_threshold, exit_threshold)
 
         graph_charts.create_all_charts(
             backtesting_instance=backtesting_instance,
@@ -34,7 +38,14 @@ def index():
             second_stock=second_stock
         )
 
+        # Calculate the new capital value
+        initial_capital = 10000
+        new_capital = initial_capital + profit
+
+        return jsonify({'new_capital': new_capital})
+
     return render_template("index.html")
 
 if __name__ == "__main__":
     app.run(debug=True)
+

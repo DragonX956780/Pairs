@@ -14,5 +14,26 @@ document.addEventListener('DOMContentLoaded', function() {
         .catch(error => {
             console.error('Error fetching stock pairs:', error);
         });
+    const form = document.querySelector("form");
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const formData = new FormData(form);
+        fetch("/", {
+        method: "POST",
+        body: formData,
+        })
+        .then((response) => response.json())
+        .then((data) => {
+            const capitalElement = document.getElementById("capital");
+            capitalElement.textContent = `Capital: $${data.new_capital.toFixed(2)}`;
+            // Reload the images to show the updated charts
+            document.querySelectorAll("img").forEach((img) => {
+            img.src = img.src.split("?")[0] + "?" + new Date().getTime();
+            });
+        })
+        .catch((error) => {
+            console.error("Error updating capital:", error);
+        });
+    });
 });
 
