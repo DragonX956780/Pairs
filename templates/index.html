@@ -7,8 +7,16 @@
     <link rel="stylesheet" href="static/styles.css">
 </head>
 <body>
-    <h1>Generate Stock Charts</h1>
+    <h1>Stock Chart</h1>
     <form method="POST">
+        <div>
+            <label for="stock-pair">Select stock pair:</label>
+            <select name="stock_pair" id="stock-pair">
+                <option value="SWK,IQV">SWK, IQV</option>
+                <option value="SWK,URI">SWK, URI</option>
+                <!-- Add more stock pairs here -->
+            </select>
+        </div>
         <div class="checkbox-container">
             <input type="checkbox" name="volume" id="volume">
             <label for="volume">Display Volume</label>
@@ -25,11 +33,21 @@
             <input type="checkbox" name="rsi" id="rsi">
             <label for="rsi">Display RSI</label>
         </div>
+        <div class="checkbox-container">
+            <input type="checkbox" name="line_graph" id="line_graph">
+            <label for="line_graph">Display Line Graph</label>
+        </div>
+
         <input type="submit" value="Generate Charts">
     </form>
-    <h2>AAPL Chart</h2>
-    <img src="static/AAPL_chart.png" alt="AAPL Chart">
-    <h2>MSFT Chart</h2>
-    <img src="static/MSFT_chart.png" alt="MSFT Chart">
+
+    <h2>First Stock Chart</h2>
+    <img src="static/first_stock_chart.png" alt="First Stock Chart">
+    <h2>Second Stock Chart</h2>
+    <img src="static/second_stock_chart.png" alt="Second Stock Chart">
+
+    <h2>Combined Stock Chart</h2>
+    <img src="static/combined_stock_chart.png" alt="Combined Stock Chart">
 </body>
 </html>
+

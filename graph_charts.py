@@ -6,6 +6,9 @@ import matplotlib.dates as mdates
 from mplfinance.original_flavor import candlestick_ohlc
 import matplotlib
 matplotlib.use('agg')
+import os
+from PIL import Image
+
 
 def plot_data_points():
     # Sample data points
@@ -66,7 +69,7 @@ def add_volume(data, stock, data_original):
     data_with_volume['Volume'] = data_original[f'{stock} Volume']
     return data_with_volume
 
-def create_candlestick_chart(csv_file, output_filename, stock, backtesting_instance=None, volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
+def create_candlestick_chart(csv_file, output_filename, stock, backtesting_instance=None, volume=False, bollinger_bands=False, moving_averages=False, rsi=False, line_graph=False):
     data_original = pd.read_csv(csv_file, index_col=0, parse_dates=True)
     column_prefix = stock
     data = data_original[[f'{column_prefix} Open', f'{column_prefix} High', f'{column_prefix} Low', f'{column_prefix} Close']]
@@ -89,6 +92,8 @@ def create_candlestick_chart(csv_file, output_filename, stock, backtesting_insta
         rsi_plot, data = add_rsi(data)
         additional_plots.append(rsi_plot)
 
+    chart_type = 'line' if line_graph else 'candle'
+
     if backtesting_instance:
         events = backtesting_instance.get_events(stock=stock)
         buy_events = {pd.to_datetime(event[0]): event[2] for event in events if event[1] == 'buy' and event[0] in data.index}
@@ -105,15 +110,26 @@ def create_candlestick_chart(csv_file, output_filename, stock, backtesting_insta
 
         markers = [buy_markers, sell_markers]
         markers = [m for m in markers if m is not None]  # Remove None values from the markers list
-        mpf.plot(data, type='candle', style='charles', title=f'{stock} Candlestick Chart', ylabel='Price',
+        mpf.plot(data, type=chart_type, style='charles', title=f'{stock} Candlestick Chart', ylabel='Price',
                 ylabel_lower='Volume', volume=volume, addplot=markers + additional_plots, savefig=output_filename)
+
     else:
-        mpf.plot(data, type='candle', style='charles', title=f'{stock} Candlestick Chart', ylabel='Price',
+        mpf.plot(data, type=chart_type, style='charles', title=f'{stock} Candlestick Chart', ylabel='Price',
                 ylabel_lower='Volume', volume=volume, savefig=output_filename)
 
+def create_combined_chart(first_stock_chart, second_stock_chart, output_filename):
+    image1 = Image.open(first_stock_chart)
+    image2 = Image.open(second_stock_chart)
 
+    image1 = image1.convert("RGBA")
+    image2 = image2.convert("RGBA")
 
-def create_all_charts(backtesting_instance=None, volume=False, bollinger_bands=False, moving_averages=False, rsi=False):
-    create_candlestick_chart('historical_stock_data.csv', 'static/AAPL_chart.png', 'AAPL', backtesting_instance=backtesting_instance, volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
-    create_candlestick_chart('historical_stock_data.csv', 'static/MSFT_chart.png', 'MSFT', backtesting_instance=backtesting_instance, volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi)
+    combined_image = Image.blend(image1, image2, alpha=0.5)
+    combined_image.save(output_filename)
+
+def create_all_charts(first_stock, second_stock, backtesting_instance=None, volume=False, bollinger_bands=False, moving_averages=False, rsi=False, line_graph=False):
+    create_candlestick_chart('historical_stock_data.csv', 'static/first_stock_chart.png', first_stock, backtesting_instance=backtesting_instance, volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi, line_graph=line_graph)
+    create_candlestick_chart('historical_stock_data.csv', 'static/second_stock_chart.png', second_stock, backtesting_instance=backtesting_instance, volume=volume, bollinger_bands=bollinger_bands, moving_averages=moving_averages, rsi=rsi, line_graph=line_graph)
+    
+    create_combined_chart('static/first_stock_chart.png', 'static/second_stock_chart.png', 'static/combined_stock_chart.png')
 
