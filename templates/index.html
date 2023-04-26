@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script src="static/main.js"></script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Charts</title>
     <link rel="stylesheet" href="static/styles.css">
@@ -12,9 +13,7 @@
         <div>
             <label for="stock-pair">Select stock pair:</label>
             <select name="stock_pair" id="stock-pair">
-                <option value="SWK,IQV">SWK, IQV</option>
-                <option value="SWK,URI">SWK, URI</option>
-                <!-- Add more stock pairs here -->
+                <!-- Options will be populated here by JavaScript -->
             </select>
         </div>
         <div class="checkbox-container">
@@ -40,14 +39,14 @@
 
         <input type="submit" value="Generate Charts">
     </form>
+    <h2>Combined Stock Chart</h2>
+    <img src="static/combined_stock_chart.png" alt="Combined Stock Chart">
 
     <h2>First Stock Chart</h2>
     <img src="static/first_stock_chart.png" alt="First Stock Chart">
     <h2>Second Stock Chart</h2>
     <img src="static/second_stock_chart.png" alt="Second Stock Chart">
 
-    <h2>Combined Stock Chart</h2>
-    <img src="static/combined_stock_chart.png" alt="Combined Stock Chart">
 </body>
 </html>
 

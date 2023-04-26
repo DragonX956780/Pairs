@@ -33,7 +33,7 @@ def find_similar_stocks(csv_file):
 if __name__ == "__main__":
     candidates = find_similar_stocks('historical_stock_data.csv')
 
-    with open('candidates.txt', 'w') as f:
+    with open('static/candidates.txt', 'w') as f:
         if candidates:
             f.write("Stock pairs for pairs trading:\n")
             for stock1, stock2 in candidates:

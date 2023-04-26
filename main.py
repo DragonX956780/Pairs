@@ -8,7 +8,10 @@ app = Flask(__name__)
 def index():
     if request.method == "POST":
         stock_pair = request.form["stock_pair"].split(",")
-        first_stock, second_stock = stock_pair
+        if len(stock_pair) != 2:
+            return "Invalid stock pair selected.", 400
+
+        first_stock, second_stock = [stock.strip() for stock in stock_pair]
 
         volume = request.form.get("volume") == "on"
         bollinger_bands = request.form.get("bollinger_bands") == "on"
