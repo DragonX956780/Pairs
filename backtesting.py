@@ -5,12 +5,22 @@ class Backtesting:
     def __init__(self, csv_file):
         self.data = pd.read_csv(csv_file, index_col=0, parse_dates=True)
         self.events = []
+        self.total_bought = 0  
+        self.total_sold = 0    
 
-    def buy(self, index, price, stock):
-        self.events.append((index, "buy", price, stock))
+    def buy(self, index, price, stock, shares=1):
+        self.events.append((index, "buy", price, stock, shares))
+        self.total_bought += price * shares
 
-    def sell(self, index, price, stock):
-        self.events.append((index, "sell", price, stock))
+    def sell(self, index, price, stock, shares=1):
+        self.events.append((index, "sell", price, stock, shares))
+        self.total_sold += price * shares
+
+
+    def percentage_gain(self):
+        if self.total_bought == 0:
+            return 0
+        return ((self.total_sold - self.total_bought) / self.total_bought) * 100
 
     def basic_strategy(self, stock, buy_threshold, sell_threshold):
         data = self.data[[f'{stock} Open', f'{stock} High', f'{stock} Low', f'{stock} Close']]
@@ -33,7 +43,7 @@ class Backtesting:
 
         return profit
 
-    def pairs_trading_strategy(self, stock1, stock2, entry_threshold, exit_threshold):
+    def pairs_trading_strategy(self, stock1, stock2, entry_threshold, exit_threshold, shares=10):
         data1 = self.data[[f'{stock1} Open', f'{stock1} High', f'{stock1} Low', f'{stock1} Close']]
         data1.columns = ['Open1', 'High1', 'Low1', 'Close1']
 
@@ -53,30 +63,31 @@ class Backtesting:
                 position = 1
                 buy_price1 = row['Close1']
                 buy_price2 = row['Close2']
-                self.buy(index, buy_price1, stock1)
-                self.sell(index, buy_price2, stock2)
+                self.buy(index, buy_price1, stock1, shares)
+                self.sell(index, buy_price2, stock2, shares)
             elif row['ZScore'] > entry_threshold and position == 0:
                 position = -1
                 buy_price1 = row['Close1']
                 buy_price2 = row['Close2']
-                self.sell(index, buy_price1, stock1)
-                self.buy(index, buy_price2, stock2)
+                self.sell(index, buy_price1, stock1, shares)
+                self.buy(index, buy_price2, stock2, shares)
             elif position == 1 and row['ZScore'] > -exit_threshold:
                 position = 0
                 sell_price1 = row['Close1']
                 sell_price2 = row['Close2']
-                profit += (sell_price1 - buy_price1) - (sell_price2 - buy_price2)
-                self.sell(index, sell_price1, stock1)
-                self.buy(index, sell_price2, stock2)
+                profit += (sell_price1 - buy_price1) * shares - (sell_price2 - buy_price2) * shares
+                self.sell(index, sell_price1, stock1, shares)
+                self.buy(index, sell_price2, stock2, shares)
             elif position == -1 and row['ZScore'] < exit_threshold:
                 position = 0
                 sell_price1 = row['Close1']
                 sell_price2 = row['Close2']
-                profit += (buy_price1 - sell_price1) - (buy_price2 - sell_price2)
-                self.buy(index, sell_price1, stock1)
-                self.sell(index, sell_price2, stock2)
+                profit += (buy_price1 - sell_price1) * shares - (buy_price2 - sell_price2) * shares
+                self.buy(index, sell_price1, stock1, shares)
+                self.sell(index, sell_price2, stock2, shares)
 
         return profit
+
 
     def get_events(self, stock=None):
         if stock is not None:

@@ -42,7 +42,12 @@ def index():
         initial_capital = 10000
         new_capital = initial_capital + profit
 
-        return jsonify({'new_capital': new_capital})
+        # Calculate the percentage profit
+        percentage_profit = backtesting_instance.percentage_gain()
+
+        return jsonify({'new_capital': new_capital, 'percentage_profit': percentage_profit})
+
+
 
     return render_template("index.html")
 

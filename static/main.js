@@ -26,6 +26,14 @@ document.addEventListener('DOMContentLoaded', function() {
         .then((data) => {
             const capitalElement = document.getElementById("capital");
             capitalElement.textContent = `Capital: $${data.new_capital.toFixed(2)}`;
+
+            const percentageProfitElement = document.getElementById("percentage-profit");
+            percentageProfitElement.textContent = `Percentage Profit: ${data.percentage_profit.toFixed(2)}%`;
+
+            document.querySelectorAll("img").forEach((img) => {
+                img.src = img.src.split("?")[0] + "?" + new Date().getTime();
+            });
+
             // Reload the images to show the updated charts
             document.querySelectorAll("img").forEach((img) => {
             img.src = img.src.split("?")[0] + "?" + new Date().getTime();
