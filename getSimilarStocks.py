@@ -3,13 +3,13 @@ import pandas as pd
 def find_similar_stocks(csv_file):
     data = pd.read_csv(csv_file, index_col=0, parse_dates=True)
 
-    # Extract unique stock symbols from column names
     stock_symbols = set([col.split()[0] for col in data.columns if "Close" in col])
-    stock_close_prices = pd.DataFrame()
+    close_prices = []
 
-    # Build DataFrame with only Close prices of unique stocks
     for symbol in stock_symbols:
-        stock_close_prices[symbol] = data[f"{symbol} Close"]
+        close_prices.append(data[f"{symbol} Close"].rename(symbol))
+
+    stock_close_prices = pd.concat(close_prices, axis=1)
 
     corr_matrix = stock_close_prices.corr()
 
@@ -26,9 +26,12 @@ def find_similar_stocks(csv_file):
             mean_diff_ratio = abs(mean_i - mean_j) / max(mean_i, mean_j)
 
             if correlation > 0.9 and mean_diff_ratio < 0.1:
-                candidates.append((stock_i, stock_j))
+                candidates.append((stock_i, stock_j, correlation))
+
+    candidates.sort(key=lambda x: x[2], reverse=True)
 
     return candidates
+
 
 if __name__ == "__main__":
     candidates = find_similar_stocks('historical_stock_data.csv')
@@ -36,7 +39,7 @@ if __name__ == "__main__":
     with open('static/candidates.txt', 'w') as f:
         if candidates:
             f.write("Stock pairs for pairs trading:\n")
-            for stock1, stock2 in candidates:
+            for stock1, stock2, correlation in candidates:  # Updated this line
                 f.write(f"{stock1}, {stock2}\n")
         else:
             f.write("No suitable stock pairs found.")
