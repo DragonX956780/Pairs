@@ -25,7 +25,7 @@ def index():
         exit_threshold = 1
 
         # Use pairs_trading_strategy instead of basic_strategy
-        profit = backtesting_instance.pairs_trading_strategy(first_stock, second_stock, entry_threshold, exit_threshold)
+        profit = backtesting_instance.pairs_trading_strategy(first_stock, second_stock)
 
         graph_charts.create_all_charts(
             backtesting_instance=backtesting_instance,

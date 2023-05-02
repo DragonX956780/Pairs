@@ -13,6 +13,7 @@ class Backtesting:
         self.total_bought += price * shares
 
     def sell(self, index, price, stock, shares=1):
+    
         self.events.append((index, "sell", price, stock, shares))
         self.total_sold += price * shares
 
@@ -43,7 +44,17 @@ class Backtesting:
 
         return profit
 
-    def pairs_trading_strategy(self, stock1, stock2, entry_threshold, exit_threshold, shares=10):
+    def read_optimized_parameters(self, stock1, stock2):
+        optimized_data = pd.read_csv('optimized.csv')
+        stock_pair = f'{stock1},{stock2}'
+        stock_data = optimized_data[(optimized_data['Stock1'] == stock1) & (optimized_data['Stock2'] == stock2)].iloc[0]
+        entry_threshold = stock_data['EntryThreshold']
+        exit_threshold = stock_data['ExitThreshold']
+        return entry_threshold, exit_threshold
+
+    def pairs_trading_strategy(self, stock1, stock2, shares=10):
+        entry_threshold, exit_threshold = self.read_optimized_parameters(stock1, stock2)
+
         data1 = self.data[[f'{stock1} Open', f'{stock1} High', f'{stock1} Low', f'{stock1} Close']]
         data1.columns = ['Open1', 'High1', 'Low1', 'Close1']
 
