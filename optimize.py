@@ -3,10 +3,10 @@ from backtesting import Backtesting
 import numpy as np
 from tqdm import tqdm
 
-def optimize_pairs_trading(backtest, stock1, stock2, entry_threshold_range, exit_threshold_range):
+def optimize_pairs_trading(backtest, stock1, stock2, entry_threshold_range, exit_threshold_range, benchmark_stock, weights):
     best_entry = 0
     best_exit = 0
-    best_percentage_gain = -np.inf
+    best_score = -np.inf
 
     for entry_threshold in entry_threshold_range:
         for exit_threshold in exit_threshold_range:
@@ -15,16 +15,24 @@ def optimize_pairs_trading(backtest, stock1, stock2, entry_threshold_range, exit
             backtest.total_sold = 0
             profit = backtest.pairs_trading_strategy(stock1, stock2, entry_threshold, exit_threshold)
             percentage_gain = backtest.percentage_gain()
+            alpha = backtest.calculate_alpha(stock1, stock2, benchmark_stock)
+            beta = backtest.calculate_beta(stock1, stock2, benchmark_stock)
+            sharpe = backtest.sharpe_ratio(stock1, stock2, benchmark_stock)
 
-            if percentage_gain > best_percentage_gain:
-                best_percentage_gain = percentage_gain
+            score = (weights['profit'] * percentage_gain
+                     + weights['alpha'] * alpha
+                     - weights['beta'] * abs(beta)
+                     + weights['sharpe'] * sharpe)
+
+            if score > best_score:
+                best_score = score
                 best_entry = entry_threshold
                 best_exit = exit_threshold
 
-    if best_percentage_gain == -np.inf:
+    if best_score == -np.inf:
         print(f"Possible issue with stock pair: {stock1}, {stock2}")
-    
-    return best_entry, best_exit, best_percentage_gain
+
+    return best_entry, best_exit, best_score
 
 
 
@@ -56,9 +64,17 @@ if __name__ == "__main__":
     exit_threshold_range = np.arange(0, 1, 0.1)
 
     optimization_results = []
+    benchmark_stock = 'SPY'  # Set the benchmark stock (e.g., SPY for S&P 500)
+    weights = {
+        'profit': 1,
+        'alpha': 1,
+        'beta': 1,
+        'sharpe': 1
+    }
 
     for stock1, stock2 in tqdm(stock_pairs, desc="Optimizing", ncols=100):
-        best_entry, best_exit, best_percentage_gain = optimize_pairs_trading(backtest, stock1, stock2, entry_threshold_range, exit_threshold_range)
-        optimization_results.append((stock1, stock2, best_entry, best_exit, best_percentage_gain))
+        best_entry, best_exit, best_score = optimize_pairs_trading(backtest, stock1, stock2, entry_threshold_range, exit_threshold_range, benchmark_stock, weights)
+        optimization_results.append((stock1, stock2, best_entry, best_exit, best_score))
 
     write_optimization_results('optimized.csv', optimization_results)
+

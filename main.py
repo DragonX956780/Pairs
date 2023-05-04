@@ -44,8 +44,14 @@ def index():
 
         # Calculate the percentage profit
         percentage_profit = backtesting_instance.percentage_gain()
+        benchmark_stock = 'SPY'
+        alpha = backtesting_instance.calculate_alpha(first_stock, second_stock, benchmark_stock)
+        beta = backtesting_instance.calculate_beta(first_stock, second_stock, benchmark_stock)
+        sharpe_ratio = backtesting_instance.sharpe_ratio(first_stock, second_stock, benchmark_stock)
 
-        return jsonify({'new_capital': new_capital, 'percentage_profit': percentage_profit})
+        return jsonify({'new_capital': new_capital, 'percentage_profit': percentage_profit, 'alpha': alpha, 'beta': beta, 'sharpe_ratio': sharpe_ratio})
+
+
 
 
 

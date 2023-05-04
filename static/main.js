@@ -23,22 +23,28 @@ document.addEventListener('DOMContentLoaded', function() {
         body: formData,
         })
         .then((response) => response.json())
-        .then((data) => {
+                .then((data) => {
             const capitalElement = document.getElementById("capital");
             capitalElement.textContent = `Capital: $${data.new_capital.toFixed(2)}`;
 
             const percentageProfitElement = document.getElementById("percentage-profit");
             percentageProfitElement.textContent = `Percentage Profit: ${data.percentage_profit.toFixed(2)}%`;
 
+            const alphaElement = document.getElementById("alpha");
+            alphaElement.textContent = `Alpha: ${data.alpha.toFixed(2)}`;
+
+            const betaElement = document.getElementById("beta");
+            betaElement.textContent = `Beta: ${data.beta.toFixed(2)}`;
+
+            const sharpeRatioElement = document.getElementById("sharpe-ratio");
+            sharpeRatioElement.textContent = `Sharpe Ratio: ${data.sharpe_ratio.toFixed(2)}`;
+
+
             document.querySelectorAll("img").forEach((img) => {
                 img.src = img.src.split("?")[0] + "?" + new Date().getTime();
             });
-
-            // Reload the images to show the updated charts
-            document.querySelectorAll("img").forEach((img) => {
-            img.src = img.src.split("?")[0] + "?" + new Date().getTime();
-            });
         })
+
         .catch((error) => {
             console.error("Error updating capital:", error);
         });

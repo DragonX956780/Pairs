@@ -44,6 +44,45 @@ class Backtesting:
 
         return profit
 
+    def calculate_benchmark_return(self, benchmark_stock):
+        data = self.data[[f'{benchmark_stock} Close']]
+        data.columns = ['Close']
+        percentage_return = ((data.iloc[-1]['Close'] - data.iloc[0]['Close']) / data.iloc[0]['Close']) * 100
+        return percentage_return
+
+    def calculate_alpha(self, stock1, stock2, benchmark_stock):
+        strategy_return = self.percentage_gain()
+        benchmark_return = self.calculate_benchmark_return(benchmark_stock)
+        alpha = strategy_return - benchmark_return
+        return alpha
+
+    def calculate_daily_returns(self, stock):
+        data = self.data[[f'{stock} Close']]
+        data.columns = ['Close']
+        daily_returns = data.pct_change().dropna()
+        return daily_returns
+
+    def calculate_beta(self, stock1, stock2, benchmark_stock):
+        strategy_returns = (self.calculate_daily_returns(stock1) + self.calculate_daily_returns(stock2)) / 2
+        benchmark_returns = self.calculate_daily_returns(benchmark_stock)
+
+        covariance = strategy_returns['Close'].cov(benchmark_returns['Close'])
+        variance = benchmark_returns['Close'].var()
+        beta = covariance / variance
+
+        return beta
+
+    def sharpe_ratio(self, stock1, stock2, benchmark_stock, risk_free_rate=0.02):
+        strategy_returns = (self.calculate_daily_returns(stock1) + self.calculate_daily_returns(stock2)) / 2
+        benchmark_returns = self.calculate_daily_returns(benchmark_stock)
+
+        excess_returns = strategy_returns - risk_free_rate
+        sharpe_ratio = np.mean(excess_returns) / np.std(excess_returns)
+
+        return float(sharpe_ratio.iloc[0])
+
+
+
     def read_optimized_parameters(self, stock1, stock2):
         optimized_data = pd.read_csv('optimized.csv')
         stock_pair = f'{stock1},{stock2}'
