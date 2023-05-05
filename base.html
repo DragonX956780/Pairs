@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channels</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="/static/channels.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>Stock Channels Analysis</h1>
+        <form id="stock-form" method="POST">
+            <label for="stock">Stock:</label>
+            <select name="stock" id="stock">
+                <!-- Stock options will be populated using JavaScript -->
+            </select>
+            <div class="checkbox-container">
+                <input type="checkbox" name="volume" id="volume">
+                <label for="volume">Display Volume</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" name="bollinger_bands" id="bollinger_bands">
+                <label for="bollinger_bands">Display Bollinger Bands</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" name="moving_averages" id="moving_averages">
+                <label for="moving_averages">Display Moving Averages</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" name="rsi" id="rsi">
+                <label for="rsi">Display RSI</label>
+            </div>
+            <div class="checkbox-container">
+                <input type="checkbox" name="line_graph" id="line_graph">
+                <label for="line_graph">Display Line Graph</label>
+            </div>
+            <button type="submit">Analyze</button>
+        </form>
+        <h2>Stock Chart</h2>
+        <img id="stock-chart" src="/static/stock_chart.png" alt="Stock Chart">
+
+    </div>
+</body>
+</html>
+

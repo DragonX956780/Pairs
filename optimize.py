@@ -43,7 +43,7 @@ def read_stock_pairs(file_path):
     stock_pairs = []
 
     for line in content[1:]:
-        stock1, stock2 = line.strip().split(', ')
+        stock1, stock2 = line.strip().split(',')
         stock_pairs.append((stock1, stock2))
 
     return stock_pairs
@@ -69,7 +69,7 @@ if __name__ == "__main__":
         'profit': 1,
         'alpha': 1,
         'beta': 1,
-        'sharpe': 1
+        'sharpe': 2
     }
 
     for stock1, stock2 in tqdm(stock_pairs, desc="Optimizing", ncols=100):

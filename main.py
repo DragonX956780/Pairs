@@ -57,6 +57,37 @@ def index():
 
     return render_template("index.html")
 
+@app.route("/channels", methods=["GET", "POST"])
+def channels():
+    if request.method == "POST":
+        stock = request.form["stock"]
+        
+        volume = request.form.get("volume") == "on"
+        bollinger_bands = request.form.get("bollinger_bands") == "on"
+        moving_averages = request.form.get("moving_averages") == "on"
+        rsi = request.form.get("rsi") == "on"
+        line_graph = request.form.get("line_graph") == "on"
+
+        backtesting_instance = Backtesting('historical_stock_data.csv')
+
+        # Generate chart for the selected stock with the specified features
+        graph_charts.create_candlestick_chart(
+            csv_file='historical_stock_data.csv',
+            output_filename='static/stock_chart.png',
+            stock=stock,
+            backtesting_instance=backtesting_instance,
+            volume=volume,
+            bollinger_bands=bollinger_bands,
+            moving_averages=moving_averages,
+            rsi=rsi,
+            line_graph=line_graph,
+        )
+
+        return jsonify({'chart_filename':'stock_chart.png'})  # Return an empty JSON object as we're not using the response data
+
+    return render_template("channels.html")
+
+
 if __name__ == "__main__":
     app.run(debug=True)
 
